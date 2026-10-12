@@ -3,21 +3,21 @@ const CATEGORY_API = "https://dummyjson.com/products/categories";
 
 const productContainer = document.querySelector("#products-container");
 const categoryContainer = document.querySelector("#category-filters");
+let categories = [];
 
+function formateCategoryName(category) {
+  return category.replace("-", " ");
+}
 
-function formateCategoryName(category){return category.replace("-", " ");};
-
-
-async function fetchProducts() {
+async function fetchProducts(url) {
   try {
-    const response = await fetch(API);
+    const response = await fetch(url);
     const data = await response.json();
-    console.log(data);
     renderProducts(data.products);
   } catch (error) {
     console.error("Error:", error);
   }
-};
+}
 
 function renderProducts(data) {
   productContainer.innerHTML = "";
@@ -52,29 +52,50 @@ function renderProducts(data) {
     article.innerHTML = card;
     productContainer.append(article);
   });
-};
+}
 
 async function fetchCategories() {
   try {
     const response = await fetch(CATEGORY_API);
     const data = await response.json();
-    console.log(data);
-    renderCategories(data);
+    categories = [{ name: "All", slug: "all", url: API }, ...data];
+    renderCategories();
   } catch (error) {
     console.error("Error:", error);
   }
-};
+}
 
-function renderCategories(categories) {
-  [{name : "All"}, ...categories].forEach((c) => {
+function renderCategories(searchSlug = "all") {
+  categoryContainer.innerHTML = "";
+  categories.forEach(({ name, slug, url }) => {
     let button = document.createElement("button");
-    button.className = "bg-white border border-slate-200 rounded-lg p-4 flex flex-col justify-between hover:border-slate-300 hover:shadow-sm transition";
+    if (slug === searchSlug) {
+      button.className =
+        "px-4 py-1.5 rounded-md text-sm font-medium bg-teal-700 text-white transition";
+    } else{
+      button.className =
+        "px-4 py-1.5 rounded-md text-sm font-medium bg-white text-slate-700 border border-slate-300 hover:bg-slate-100 transition";
+    } 
     button.type = "button";
-    button.textContent = c.name;
+    button.textContent = name;
+    button.dataset.url = url;
+    button.dataset.slug = slug;
+
     categoryContainer.append(button);
   });
-};
+}
 
+categoryContainer.addEventListener("click", (e) => {
+  e.stopImmediatePropagation();
+  const element = e.target;
+  if (element.type) {
+    const slug = element.dataset.slug;
+    const url = element.dataset.url;
+    fetchProducts(url);
+    renderCategories(slug);
+    //
+  }
+});
 
-fetchProducts();
+fetchProducts(API);
 fetchCategories();
